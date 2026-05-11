@@ -1,0 +1,32 @@
+workflows:
+  android-release:
+    name: Android Release (APK)
+    max_build_duration: 60
+    environment:
+      node: 20.18.0
+    scripts:
+      - name: Install pnpm
+        script: npm install -g pnpm
+
+      - name: Install dependencies
+        script: |
+          cd artifacts/braw
+          pnpm install --no-frozen-lockfile
+
+      - name: Build Android APK
+        script: |
+          cd artifacts/braw
+          npx expo prebuild --platform android --clean
+          cd android
+          ./gradlew assembleRelease
+
+    artifacts:
+      - artifacts/braw/android/app/build/outputs/**/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - kuzenlervehal@gmail.com
+        notify:
+          success: true
+          failure: true
