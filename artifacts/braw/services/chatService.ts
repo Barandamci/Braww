@@ -154,6 +154,7 @@ export async function sendMessage(
   await updateDoc(doc(db, "chats", chatId), {
     lastMessage: mediaType === "image" ? "Fotoğraf" : mediaType === "file" ? `Dosya: ${fileName}` : text,
     lastMessageTime: serverTimestamp(),
+    lastMessageSenderId: senderId,
   });
 }
 
@@ -240,6 +241,8 @@ export async function sendGroupMessage(
   await updateDoc(doc(db, "groups", groupId), {
     lastMessage: mediaType === "image" ? "Fotoğraf" : mediaType === "file" ? `Dosya: ${fileName}` : text,
     lastMessageTime: serverTimestamp(),
+    lastMessageSenderId: senderId,
+    lastMessageSenderName: senderName,
   });
 }
 

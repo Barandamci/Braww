@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import * as ImagePicker from "expo-image-picker";
@@ -20,6 +20,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useNotifications } from "@/context/NotificationContext";
 import {
   subscribeToGroupMessages,
   sendGroupMessage,
@@ -34,6 +35,7 @@ export default function GroupChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useAuth();
+  const { setActiveChatId } = useNotifications();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
@@ -41,6 +43,13 @@ export default function GroupChatScreen() {
   const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
   const flatRef = useRef<FlatList>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) setActiveChatId(id);
+      return () => setActiveChatId(null);
+    }, [id])
+  );
 
   useEffect(() => {
     if (!id) return;

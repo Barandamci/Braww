@@ -9,11 +9,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationLayer } from "@/components/NotificationLayer";
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
@@ -38,7 +41,7 @@ function AuthGuard() {
 
 function RootLayoutNav() {
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <AuthGuard />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -53,7 +56,8 @@ function RootLayoutNav() {
         <Stack.Screen name="new-group" options={{ headerShown: false }} />
         <Stack.Screen name="voice-call/[id]" options={{ headerShown: false }} />
       </Stack>
-    </>
+      <NotificationLayer />
+    </View>
   );
 }
 
@@ -80,7 +84,9 @@ export default function RootLayout() {
           <AuthProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProvider>
-                <RootLayoutNav />
+                <NotificationProvider>
+                  <RootLayoutNav />
+                </NotificationProvider>
               </KeyboardProvider>
             </GestureHandlerRootView>
           </AuthProvider>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -11,27 +11,65 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
 import { getUserById } from "@/services/userService";
+import {
+  initiateCall,
+  acceptCall,
+  endCall,
+  subscribeToCallStatus,
+} from "@/services/callService";
 import { UserAvatar } from "@/components/UserAvatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import * as Haptics from "expo-haptics";
 import type { UserProfile } from "@/context/AuthContext";
 
 export default function VoiceCallScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, callId: paramCallId, incoming } = useLocalSearchParams<{
+    id: string;
+    callId?: string;
+    incoming?: string;
+  }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile } = useAuth();
+
   const [other, setOther] = useState<UserProfile | null>(null);
-  const [callState, setCallState] = useState<"ringing" | "connected" | "ended">("ringing");
+  const [callState, setCallState] = useState<"ringing" | "connected" | "ended">(
+    incoming === "true" ? "connected" : "ringing"
+  );
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(false);
   const [speakerOn, setSpeakerOn] = useState(false);
-  const pulseAnim = new Animated.Value(1);
+  const [activeCallId, setActiveCallId] = useState<string | null>(paramCallId ?? null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (id) getUserById(id).then(setOther);
   }, [id]);
+
+  useEffect(() => {
+    if (!profile || incoming === "true") return;
+    if (!id) return;
+    initiateCall(profile.uid, profile.name, profile.photoURL ?? null, id).then((cid) => {
+      setActiveCallId(cid);
+    });
+  }, [profile?.uid, id]);
+
+  useEffect(() => {
+    if (!activeCallId) return;
+    const unsub = subscribeToCallStatus(activeCallId, (status) => {
+      if (status === "accepted") {
+        setCallState("connected");
+        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else if (status === "rejected" || status === "ended") {
+        setCallState("ended");
+        setTimeout(() => router.back(), 1200);
+      }
+    });
+    return unsub;
+  }, [activeCallId]);
 
   useEffect(() => {
     Animated.loop(
@@ -40,12 +78,17 @@ export default function VoiceCallScreen() {
         Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
       ])
     ).start();
-    const connectTimer = setTimeout(() => {
-      setCallState("connected");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 2500);
-    return () => clearTimeout(connectTimer);
   }, []);
+
+  useEffect(() => {
+    if (callState === "ringing" && incoming !== "true") {
+      const autoConnectTimer = setTimeout(() => {
+        setCallState("connected");
+        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }, 3000);
+      return () => clearTimeout(autoConnectTimer);
+    }
+  }, [callState, incoming]);
 
   useEffect(() => {
     if (callState !== "connected") return;
@@ -53,10 +96,11 @@ export default function VoiceCallScreen() {
     return () => clearInterval(interval);
   }, [callState]);
 
-  const handleHangup = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const handleHangup = async () => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (activeCallId) await endCall(activeCallId);
     setCallState("ended");
-    setTimeout(() => router.back(), 1000);
+    setTimeout(() => router.back(), 800);
   };
 
   function formatDuration(s: number): string {
@@ -71,14 +115,29 @@ export default function VoiceCallScreen() {
   return (
     <View style={[styles.root, { backgroundColor: "#0D1117" }]}>
       <View style={[styles.header, { paddingTop: topPad + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#ffffff80" />
+        <TouchableOpacity onPress={handleHangup}>
+          <Feather name="arrow-left" size={24} color="#ffffff60" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.center}>
-        <Animated.View style={[styles.avatarRing, { transform: [{ scale: callState === "ringing" ? pulseAnim : 1 }], borderColor: "#1A6DFF40" }]}>
-          <View style={[styles.avatarRing2, { borderColor: "#1A6DFF70" }]}>
+        <Animated.View
+          style={[
+            styles.avatarRing,
+            {
+              transform: [{ scale: callState === "ringing" ? pulseAnim : 1 }],
+              borderColor: callState === "connected" ? "#34C75940" : "#1A6DFF40",
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.avatarRing2,
+              {
+                borderColor: callState === "connected" ? "#34C75970" : "#1A6DFF70",
+              },
+            ]}
+          >
             <UserAvatar photoURL={other?.photoURL} name={other?.name ?? ""} size={100} />
           </View>
         </Animated.View>
@@ -90,11 +149,19 @@ export default function VoiceCallScreen() {
           </View>
           <Text style={styles.callStatus}>
             {callState === "ringing"
-              ? "Aranıyor..."
+              ? incoming === "true"
+                ? "Arama kabul edildi"
+                : "Aranıyor..."
               : callState === "connected"
               ? formatDuration(duration)
               : "Arama sona erdi"}
           </Text>
+          {callState === "connected" && (
+            <View style={styles.connectedBadge}>
+              <View style={styles.greenDot} />
+              <Text style={styles.connectedText}>Bağlandı</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -102,17 +169,30 @@ export default function VoiceCallScreen() {
         <View style={styles.topControls}>
           <TouchableOpacity
             style={[styles.ctrlBtn, { backgroundColor: muted ? "#1A6DFF" : "#ffffff15" }]}
-            onPress={() => { setMuted(!muted); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            onPress={() => {
+              setMuted(!muted);
+              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
           >
             <Feather name={muted ? "mic-off" : "mic"} size={22} color="#fff" />
             <Text style={styles.ctrlLabel}>{muted ? "Sessiz Açık" : "Sessiz"}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.ctrlBtn, { backgroundColor: speakerOn ? "#1A6DFF" : "#ffffff15" }]}
-            onPress={() => { setSpeakerOn(!speakerOn); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            onPress={() => {
+              setSpeakerOn(!speakerOn);
+              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
           >
             <Feather name="volume-2" size={22} color="#fff" />
             <Text style={styles.ctrlLabel}>{speakerOn ? "Hoparlör Açık" : "Hoparlör"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, { backgroundColor: "#ffffff15" }]}
+            onPress={() => {}}
+          >
+            <Feather name="video-off" size={22} color="#ffffff60" />
+            <Text style={[styles.ctrlLabel, { color: "#ffffff60" }]}>Video</Text>
           </TouchableOpacity>
         </View>
 
@@ -129,17 +209,17 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 10 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 28 },
   avatarRing: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 164,
+    height: 164,
+    borderRadius: 82,
     borderWidth: 3,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarRing2: {
-    width: 136,
-    height: 136,
-    borderRadius: 68,
+    width: 138,
+    height: 138,
+    borderRadius: 69,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
@@ -148,17 +228,20 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   name: { color: "#fff", fontSize: 26, fontFamily: "Inter_700Bold" },
   callStatus: { color: "#ffffff80", fontSize: 16, fontFamily: "Inter_400Regular" },
+  connectedBadge: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  greenDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#34C759" },
+  connectedText: { color: "#34C759", fontSize: 13, fontFamily: "Inter_500Medium" },
   controls: { paddingHorizontal: 40, gap: 32 },
-  topControls: { flexDirection: "row", justifyContent: "center", gap: 24 },
+  topControls: { flexDirection: "row", justifyContent: "center", gap: 20 },
   ctrlBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
   },
-  ctrlLabel: { color: "#fff", fontSize: 11, fontFamily: "Inter_400Regular" },
+  ctrlLabel: { color: "#fff", fontSize: 10, fontFamily: "Inter_400Regular" },
   hangupBtn: {
     alignSelf: "center",
     width: 72,

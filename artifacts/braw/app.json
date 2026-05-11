@@ -43,6 +43,16 @@
           "photosPermission": "Braw profiliniz için fotoğraf seçmenize izin verin.",
           "cameraPermission": "Braw fotoğraf çekmenize izin verin."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#1A6DFF",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "Braw Bildirimleri"
+        }
       ]
     ],
     "experiments": {

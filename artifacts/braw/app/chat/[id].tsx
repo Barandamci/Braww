@@ -11,7 +11,7 @@ import {
   Alert,
   Image,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import * as ImagePicker from "expo-image-picker";
@@ -21,6 +21,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useNotifications } from "@/context/NotificationContext";
 import {
   subscribeToMessages,
   sendMessage,
@@ -38,6 +39,7 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useAuth();
+  const { setActiveChatId } = useNotifications();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
@@ -45,6 +47,13 @@ export default function ChatScreen() {
   const [other, setOther] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const flatRef = useRef<FlatList>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) setActiveChatId(id);
+      return () => setActiveChatId(null);
+    }, [id])
+  );
 
   useEffect(() => {
     if (!id || !profile) return;
