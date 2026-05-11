@@ -1,3 +1,5 @@
+cd ~/workspace
+cat > codemagic.yaml << 'CODEMAGIC'
 workflows:
   android-release:
     name: Android Release (APK)
@@ -18,7 +20,9 @@ workflows:
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
           echo "kotlinVersion=2.1.0" >> android/gradle.properties
+          grep -n "enableBundleCompression" android/app/build.gradle
           sed -i '/enableBundleCompression/d' android/app/build.gradle
+          grep -n "enableBundleCompression" android/app/build.gradle || echo "Silindi!"
           cd android
           ./gradlew assembleRelease 2>&1 || true
 
@@ -32,3 +36,4 @@ workflows:
         notify:
           success: true
           failure: true
+CODEMAGIC
