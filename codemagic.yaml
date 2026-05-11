@@ -18,7 +18,16 @@ workflows:
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
           echo "kotlinVersion=2.1.0" >> android/gradle.properties
-          sed -i "/enableBundleCompression/d" android/app/build.gradle
+          python3 -c "
+f = open('android/app/build.gradle', 'r')
+lines = f.readlines()
+f.close()
+lines = [l for l in lines if 'enableBundleCompression' not in l]
+f = open('android/app/build.gradle', 'w')
+f.writelines(lines)
+f.close()
+print('enableBundleCompression silindi!')
+"
           cd android
           ./gradlew assembleRelease 2>&1 || true
 
