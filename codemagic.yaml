@@ -17,7 +17,7 @@ workflows:
         script: |
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
-          echo "kotlinVersion=2.1.0" >> android/gradle.properties
+          echo "kotlinVersion=2.0.21" >> android/gradle.properties
           python3 fix-gradle.py
           cd android
           ./gradlew assembleRelease 2>&1 || true
