@@ -1,14 +1,8 @@
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -62,20 +56,23 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-  });
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+    Font.loadAsync({
+      Inter_400Regular: require("../assets/fonts/Inter_400Regular.ttf"),
+      Inter_500Medium: require("../assets/fonts/Inter_500Medium.ttf"),
+      Inter_600SemiBold: require("../assets/fonts/Inter_600SemiBold.ttf"),
+      Inter_700Bold: require("../assets/fonts/Inter_700Bold.ttf"),
+    })
+      .catch(() => {})
+      .finally(() => {
+        setFontsLoaded(true);
+        SplashScreen.hideAsync();
+      });
+  }, []);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsLoaded) return null;
 
   return (
     <SafeAreaProvider>
