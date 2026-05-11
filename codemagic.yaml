@@ -10,7 +10,6 @@ workflows:
         script: |
           corepack disable
           npm install -g pnpm@9 --force
-          cd artifacts/braw
           pnpm install --no-frozen-lockfile
 
       - name: Build Android APK
