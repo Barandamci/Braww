@@ -59,10 +59,10 @@
   },
   "dependencies": {
     "expo-av": "~15.0.8",
-    "expo-device": "~18.0.4",
-    "expo-document-picker": "~13.0.1",
-    "expo-file-system": "~18.0.10",
-    "expo-notifications": "~0.29.9",
+    "expo-device": "~6.0.2",
+    "expo-document-picker": "~12.0.2",
+    "expo-file-system": "~17.0.1",
+    "expo-notifications": "~0.28.19",
     "firebase": "^12.13.0"
   }
 }
