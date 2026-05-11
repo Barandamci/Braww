@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Braw",
+    "slug": "braw",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "braw",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A6DFF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.braw.tr"
+    },
+    "android": {
+      "package": "com.braw.tr",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#1A6DFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Braw profiliniz için fotoğraf seçmenize izin verin.",
+          "cameraPermission": "Braw fotoğraf çekmenize izin verin."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

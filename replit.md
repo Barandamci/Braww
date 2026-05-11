@@ -1,44 +1,65 @@
-# [Project name]
+# Braw Messenger
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Braw, Firebase tabanlı gerçek zamanlı mesajlaşma uygulamasıdır. Bireysel ve grup sohbetleri, sesli arama, dosya/fotoğraf paylaşımı ve kapsamlı admin paneli içerir.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/braw run dev` — Expo uygulamasını çalıştır
+- `pnpm --filter @workspace/api-server run dev` — API sunucusunu çalıştır (port 5000)
+- `pnpm run typecheck` — Tüm paketleri type-check et
+- Required env: `DATABASE_URL` — Postgres bağlantı dizisi (API server için)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Mobile: Expo (React Native) + Expo Router
+- Backend: Firebase (Auth, Firestore, Storage)
+- State: React Context + React Query
+- API: Express 5 (api-server)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/braw/` — Expo mobil uygulama
+- `artifacts/braw/services/firebase.ts` — Firebase config
+- `artifacts/braw/services/chatService.ts` — Sohbet/grup işlemleri
+- `artifacts/braw/services/adminService.ts` — Admin işlemleri
+- `artifacts/braw/context/AuthContext.tsx` — Authentication state
+- `artifacts/braw/app/(auth)/` — Giriş/Kayıt ekranları
+- `artifacts/braw/app/(tabs)/` — Ana sekmeler (Sohbetler, Gruplar, Ara, Profil)
+- `artifacts/braw/app/chat/[id].tsx` — Bireysel sohbet
+- `artifacts/braw/app/group/[id].tsx` — Grup sohbeti
+- `artifacts/braw/app/admin/` — Admin paneli
+- `artifacts/braw/app/voice-call/[id].tsx` — Sesli arama ekranı
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Firebase Firestore gerçek zamanlı dinleyiciler (onSnapshot) kullanılıyor — polling yok
+- Admin paneli sadece `isAdmin: true` kullanıcılara görünür
+- Mavi tik = `verified: "blue"`, Siyah tik = `verified: "black"` — admin tarafından verilir
+- Dosya/fotoğraf paylaşımı Firebase Storage üzerinden yapılıyor
+- Sesli arama UI simüle edilmiş — gerçek WebRTC için native build gerekir
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Kayıt: İsim, kullanıcı adı, e-posta, şifre
+- Sohbet: Bireysel mesajlaşma, grup mesajlaşma
+- Medya: Fotoğraf gönderme, dosya gönderme
+- Arama: Kullanıcı adıyla kullanıcı bulma
+- Sesli Arama: Arama UI (tam WebRTC için native build gerekir)
+- Admin Panel: Mavi/siyah tik verme, mesaj okuma, banlama/kaldırma
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Uygulama adı: Braw
+- Paket adı: com.braw.tr
+- Dil: Türkçe UI
+- Firebase project: braw-te
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Admin hesabı oluşturmak için Firestore'da kullanıcı dökümanında `isAdmin: true` ayarla
+- Firebase Storage ve Firestore kuralları production'da ayarlanmalı
+- expo-document-picker ve expo-file-system versiyonları uyarısı var — uyumluluk için güncellenebilir
 
 ## Pointers
 
