@@ -18,9 +18,10 @@ workflows:
           npx expo prebuild --platform android --clean --no-install
           echo "kotlinVersion=1.9.24" >> android/gradle.properties
           echo "android.suppressUnsupportedCompileSdk=35" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
           python3 fix-gradle.py
           cd android
-          sed -i 's/classpath("com.android.tools.build:gradle:[^"]*")/classpath("com.android.tools.build:gradle:8.3.2")/' build.gradle 2>/dev/null || true
+          sed -i 's|distributionUrl=.*|distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip|' gradle/wrapper/gradle-wrapper.properties
           ./gradlew assembleRelease --warning-mode none
 
     artifacts:
