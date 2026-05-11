@@ -56,11 +56,11 @@
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
-    "expo-av": "~14.0.6",
-    "expo-device": "~16.0.0",
-    "expo-document-picker": "~12.0.1",
-    "expo-file-system": "~17.0.1",
-    "expo-notifications": "~0.28.19",
+    "expo-av": "~15.0.2",
+    "expo-device": "~55.0.16",
+    "expo-document-picker": "~13.0.2",
+    "expo-file-system": "~18.0.11",
+    "expo-notifications": "~0.29.14",
     "firebase": "^12.13.0"
   }
 }
