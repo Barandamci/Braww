@@ -20,8 +20,8 @@ workflows:
           echo "android.suppressUnsupportedCompileSdk=35" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           python3 fix-gradle.py
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > android/gradle/wrapper/gradle-wrapper.properties
           cd android
-          sed -i 's|distributionUrl=.*|distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip|' gradle/wrapper/gradle-wrapper.properties
           ./gradlew assembleRelease --warning-mode none
 
     artifacts:
