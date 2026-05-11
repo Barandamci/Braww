@@ -17,9 +17,11 @@ workflows:
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
           echo "kotlinVersion=1.9.24" >> android/gradle.properties
+          echo "android.suppressUnsupportedCompileSdk=35" >> android/gradle.properties
           python3 fix-gradle.py
           cd android
-          ./gradlew assembleRelease
+          sed -i 's/classpath("com.android.tools.build:gradle:[^"]*")/classpath("com.android.tools.build:gradle:8.3.2")/' build.gradle 2>/dev/null || true
+          ./gradlew assembleRelease --warning-mode none
 
     artifacts:
       - artifacts/braw/android/app/build/outputs/**/*.apk
