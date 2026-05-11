@@ -16,7 +16,7 @@ workflows:
       - name: Build Android APK
         script: |
           cd artifacts/braw
-          npx expo prebuild --platform android --clean
+          npx expo prebuild --platform android --clean --no-install
           cd android
           ./gradlew assembleRelease 2>&1 || true
 
