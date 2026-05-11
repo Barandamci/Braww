@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/services/firebase";
+import { isOwnerEmail } from "@/constants/owner";
 
 export interface UserProfile {
   uid: string;
@@ -17,6 +18,7 @@ export interface UserProfile {
   photoURL: string | null;
   verified: "blue" | "black" | null;
   isAdmin: boolean;
+  isOwner?: boolean;
   isBanned: boolean;
   banReason: string | null;
   createdAt: number;
@@ -39,11 +41,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (uid: string) => {
+  const fetchProfile = async (uid: string, email?: string | null) => {
     try {
       const docSnap = await getDoc(doc(db, "users", uid));
       if (docSnap.exists()) {
-        setProfile(docSnap.data() as UserProfile);
+        const data = docSnap.data() as UserProfile;
+        const owner = isOwnerEmail(email ?? data.email);
+        setProfile({ ...data, isOwner: owner, isAdmin: owner ? true : data.isAdmin });
       }
     } catch (e) {
       console.error("fetchProfile error", e);
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        await fetchProfile(u.uid);
+        await fetchProfile(u.uid, u.email);
       } else {
         setProfile(null);
       }
@@ -65,12 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    await fetchProfile(cred.user.uid);
+    await fetchProfile(cred.user.uid, cred.user.email);
   };
 
   const register = async (name: string, username: string, email: string, password: string) => {
     const lower = username.toLowerCase().trim();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const owner = isOwnerEmail(email);
     const newProfile: UserProfile = {
       uid: cred.user.uid,
       name: name.trim(),
@@ -78,7 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       photoURL: null,
       verified: null,
-      isAdmin: false,
+      isAdmin: owner,
+      isOwner: owner,
       isBanned: false,
       banReason: null,
       createdAt: Date.now(),
@@ -96,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (user) await fetchProfile(user.uid);
+    if (user) await fetchProfile(user.uid, user.email);
   };
 
   return (

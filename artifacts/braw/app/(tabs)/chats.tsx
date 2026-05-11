@@ -56,12 +56,12 @@ export default function ChatsScreen() {
       <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Sohbetler</Text>
         <View style={styles.headerActions}>
-          {profile?.isAdmin && (
+          {profile?.isOwner && (
             <TouchableOpacity
-              style={[styles.iconBtn, { backgroundColor: colors.card }]}
+              style={[styles.iconBtn, { backgroundColor: "#FFD70015" }]}
               onPress={() => router.push("/admin/index")}
             >
-              <Feather name="shield" size={20} color={colors.primary} />
+              <Text style={{ fontSize: 18 }}>👑</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity

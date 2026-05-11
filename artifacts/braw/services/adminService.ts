@@ -7,9 +7,9 @@ import {
   query,
   where,
   orderBy,
-  onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/services/firebase";
+import { isOwnerEmail } from "@/constants/owner";
 import type { UserProfile } from "@/context/AuthContext";
 import type { ChatMessage, Chat } from "@/services/chatService";
 
@@ -23,11 +23,36 @@ export async function setVerified(uid: string, verified: "blue" | "black" | null
 }
 
 export async function banUser(uid: string, reason: string) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (snap.exists()) {
+    const data = snap.data() as UserProfile;
+    if (isOwnerEmail(data.email)) {
+      throw new Error("OWNER_PROTECTED");
+    }
+  }
   await updateDoc(doc(db, "users", uid), { isBanned: true, banReason: reason });
 }
 
 export async function unbanUser(uid: string) {
   await updateDoc(doc(db, "users", uid), { isBanned: false, banReason: null });
+}
+
+export async function makeAdmin(uid: string) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (snap.exists()) {
+    const data = snap.data() as UserProfile;
+    if (isOwnerEmail(data.email)) return;
+  }
+  await updateDoc(doc(db, "users", uid), { isAdmin: true });
+}
+
+export async function removeAdmin(uid: string) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (snap.exists()) {
+    const data = snap.data() as UserProfile;
+    if (isOwnerEmail(data.email)) return;
+  }
+  await updateDoc(doc(db, "users", uid), { isAdmin: false });
 }
 
 export async function getUserChats(uid: string): Promise<Chat[]> {
