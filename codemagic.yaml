@@ -19,7 +19,7 @@ workflows:
           echo "kotlinVersion=1.9.24" >> android/gradle.properties
           python3 fix-gradle.py
           cd android
-          ./gradlew assembleRelease 2>&1 || true
+          ./gradlew assembleRelease
 
     artifacts:
       - artifacts/braw/android/app/build/outputs/**/*.apk
