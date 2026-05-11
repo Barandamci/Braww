@@ -18,6 +18,7 @@ workflows:
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
           cd android
+          sed -i 's/kotlinVersion = "1.9.25"/kotlinVersion = "2.1.0"/' build.gradle 2>/dev/null || true
           ./gradlew assembleRelease 2>&1 || true
 
     artifacts:
