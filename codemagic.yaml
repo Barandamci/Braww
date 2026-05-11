@@ -17,7 +17,7 @@ workflows:
         script: |
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
-          find android -name "*.gradle" | xargs grep -l "kotlinVersion" | xargs sed -i 's/kotlinVersion = "[^"]*"/kotlinVersion = "2.1.0"/g'
+          echo "kotlinVersion=2.1.0" >> android/gradle.properties
           cd android
           ./gradlew assembleRelease 2>&1 || true
 
