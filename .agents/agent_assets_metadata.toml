@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "rQSDvrTQi8pW3YLCHWkYA"
+uri = "file://artifacts/braw/braw_keystore.tar.gz"
+type = "unspecified"
+title = "Braw Android Keystore (indir ve aç)"
