@@ -5,9 +5,6 @@ workflows:
     environment:
       node: 20.18.0
     scripts:
-      - name: Install pnpm
-        script: npm install -g pnpm
-
       - name: Install dependencies
         script: |
           cd artifacts/braw
