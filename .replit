@@ -30,3 +30,9 @@ externalPort = 8081
 [[ports]]
 localPort = 22053
 externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+GMAIL_USER = "noreply.braw@gmail.com"
+GMAIL_APP_PASSWORD = "jqxjppfcoazwpcmv"

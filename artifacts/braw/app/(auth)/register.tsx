@@ -16,18 +16,18 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/context/AuthContext";
+import { getApiBaseUrl } from "@/services/apiConfig";
 
 export default function RegisterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { register } = useAuth();
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
@@ -43,19 +43,34 @@ export default function RegisterScreen() {
       Alert.alert("Hata", "Şifre en az 6 karakter olmalıdır.");
       return;
     }
+    if (!email.includes("@") || !email.includes(".")) {
+      Alert.alert("Hata", "Geçerli bir e-posta girin.");
+      return;
+    }
     setLoading(true);
     try {
-      await register(name.trim(), username.trim(), email.trim(), password);
-    } catch (e: any) {
-      let msg = "Kayıt başarısız.";
-      if (e.code === "auth/email-already-in-use") {
-        msg = "Bu e-posta zaten kullanılıyor.";
-      } else if (e.code === "auth/invalid-email") {
-        msg = "Geçersiz e-posta.";
-      } else if (e.code === "auth/weak-password") {
-        msg = "Şifre çok zayıf.";
+      const base = getApiBaseUrl();
+      const res = await fetch(`${base}/api/otp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        Alert.alert("Hata", data.error ?? "Kod gönderilemedi.");
+        return;
       }
-      Alert.alert("Hata", msg);
+      router.push({
+        pathname: "/(auth)/verify-otp",
+        params: {
+          email: email.toLowerCase().trim(),
+          name: name.trim(),
+          username: username.trim().toLowerCase(),
+          password,
+        },
+      });
+    } catch {
+      Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edin.");
     } finally {
       setLoading(false);
     }
@@ -70,10 +85,7 @@ export default function RegisterScreen() {
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={24} color={colors.foreground} />
         </TouchableOpacity>
 
@@ -100,6 +112,7 @@ export default function RegisterScreen() {
               onChangeText={setName}
             />
           </View>
+
           <View>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>Kullanıcı Adı</Text>
             <View style={styles.usernameRow}>
@@ -114,6 +127,7 @@ export default function RegisterScreen() {
               />
             </View>
           </View>
+
           <View>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>E-posta</Text>
             <TextInput
@@ -126,16 +140,25 @@ export default function RegisterScreen() {
               autoCapitalize="none"
             />
           </View>
+
           <View>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>Şifre</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
-              placeholder="En az 6 karakter"
-              placeholderTextColor={colors.mutedForeground}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, styles.passwordInput, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
+                placeholder="En az 6 karakter"
+                placeholderTextColor={colors.mutedForeground}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={[styles.eyeBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -147,9 +170,13 @@ export default function RegisterScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Kayıt Ol</Text>
+              <Text style={styles.btnText}>Doğrulama Kodu Gönder</Text>
             )}
           </TouchableOpacity>
+
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+            E-postana 6 haneli doğrulama kodu gönderilecek
+          </Text>
         </View>
 
         <TouchableOpacity onPress={() => router.back()}>
@@ -184,6 +211,16 @@ const styles = StyleSheet.create({
   usernameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   atSign: { fontSize: 20, fontFamily: "Inter_500Medium" },
   usernameInput: { flex: 1 },
+  passwordRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  passwordInput: { flex: 1 },
+  eyeBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   btn: {
     height: 52,
     borderRadius: 14,
@@ -192,5 +229,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   btnText: { color: "#fff", fontSize: 17, fontFamily: "Inter_600SemiBold" },
+  hint: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
   link: { textAlign: "center", fontSize: 15, fontFamily: "Inter_400Regular" },
 });

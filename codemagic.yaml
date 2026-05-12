@@ -3,25 +3,36 @@ workflows:
     name: Android Release (APK)
     max_build_duration: 60
     environment:
-      node: 22.11.0
+      node: 20.18.0
       java: 17
     scripts:
-      - name: Install dependencies
+      - name: Install pnpm
         script: |
           corepack disable
           npm install -g pnpm@9 --force
+          pnpm --version
+
+      - name: Install dependencies
+        script: |
           pnpm install --no-frozen-lockfile
 
-      - name: Build Android APK
+      - name: Expo Prebuild
         script: |
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
-          echo "kotlinVersion=1.9.24" >> android/gradle.properties
-          echo "android.suppressUnsupportedCompileSdk=34" >> android/gradle.properties
-          python3 fix-gradle.py
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > android/gradle/wrapper/gradle-wrapper.properties
-          cd android
-          ./gradlew assembleRelease --warning-mode none
+
+      - name: Fix Gradle properties
+        script: |
+          cd artifacts/braw/android
+          echo "kotlinVersion=1.9.24" >> gradle.properties
+          echo "android.suppressUnsupportedCompileSdk=34" >> gradle.properties
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+
+      - name: Build Android APK
+        script: |
+          cd artifacts/braw/android
+          ./gradlew assembleRelease --warning-mode none --no-daemon
 
     artifacts:
       - artifacts/braw/android/app/build/outputs/**/*.apk
@@ -29,7 +40,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - kuzenlervehal@gmail.com
+          - barandamci@icloud.com
         notify:
           success: true
           failure: true
