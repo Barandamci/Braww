@@ -3,7 +3,7 @@ workflows:
     name: Android Release (APK)
     max_build_duration: 60
     environment:
-      node: 20.18.0
+      node: 22.11.0
       java: 17
     scripts:
       - name: Install pnpm
