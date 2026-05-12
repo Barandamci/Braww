@@ -16,6 +16,30 @@ workflows:
         script: |
           pnpm install --no-frozen-lockfile
 
+      - name: Patch expo-modules-autolinking for Gradle 8.x
+        script: |
+          # expo-modules-autolinking@2.1.15 uses org.gradle.internal.extensions.core.extra
+          # which is an internal Gradle API removed in Gradle 8.x.
+          # Fix: remove the internal import and replace usage with the public API.
+          AUTOLINKING_SRC=$(find /Users/builder/clone/node_modules -path "*/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-settings-plugin/src/main/kotlin" -type d 2>/dev/null | head -1)
+          if [ -n "$AUTOLINKING_SRC" ]; then
+            echo "Found autolinking source at: $AUTOLINKING_SRC"
+            SM_FILE="$AUTOLINKING_SRC/expo/modules/plugin/SettingsManager.kt"
+            if [ -f "$SM_FILE" ]; then
+              echo "Patching SettingsManager.kt..."
+              # Remove the internal Gradle API import
+              sed -i '/import org.gradle.internal.extensions.core.extra/d' "$SM_FILE"
+              # Replace internal .extra.set() usage with the public ExtraPropertiesExtension API
+              sed -i 's/project\.extra\.set(/project.extensions.extraProperties.set(/g' "$SM_FILE"
+              echo "Patch applied successfully"
+              grep -n "extra" "$SM_FILE" || true
+            else
+              echo "WARNING: SettingsManager.kt not found at $SM_FILE"
+            fi
+          else
+            echo "WARNING: expo-modules-autolinking source not found"
+          fi
+
       - name: Expo Prebuild
         script: |
           cd artifacts/braw
@@ -25,18 +49,15 @@ workflows:
         script: |
           cd artifacts/braw/android
 
-          # Kotlin 1.9.0 — expo-autolinking@2.1.x ile uyumlu
+          # Kotlin 1.9.25 — matches expo SDK 53 toolchain
           sed -i '/kotlinVersion/d' gradle.properties
-          echo "kotlinVersion=1.9.0" >> gradle.properties
+          echo "kotlinVersion=1.9.25" >> gradle.properties
 
-          # AGP uyarısını kapat
+          # Suppress AGP compile SDK warning
           echo "android.suppressUnsupportedCompileSdk=34" >> gradle.properties
 
-          # New arch sorun çıkarıyorsa kapat
-          sed -i 's/newArchEnabled=true/newArchEnabled=false/' gradle.properties
-
-          # Gradle 8.3 — expo-autolinking ile uyumlu, 8.6 değil
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.3-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
+          # Gradle 8.8 — officially recommended for Expo SDK 53
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.8-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
 
           chmod +x gradlew
 

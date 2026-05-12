@@ -158,3 +158,6 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+  # expo-modules-autolinking@2.1.15 has a broken Kotlin settings plugin (Unresolved reference: extensions/extra).
+  # 3.0.25 fixes the Gradle API calls. Autolinking is a build-time tool so this override is safe.
+  expo-modules-autolinking: "3.0.25"
