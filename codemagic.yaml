@@ -51,14 +51,14 @@ workflows:
 
           # Kotlin 1.9.25 — matches expo SDK 53 toolchain
           sed -i '/kotlinVersion/d' gradle.properties
-          echo "kotlinVersion=1.9.25" >> gradle.properties
-          echo "suppressKotlinVersionCompatibilityCheck=1.9.25" >> gradle.properties
+          echo "kotlinVersion=2.0.21" >> gradle.properties
+          echo "suppressKotlinVersionCompatibilityCheck=2.0.21" >> gradle.properties
 
           # Suppress AGP compile SDK warning
           echo "android.suppressUnsupportedCompileSdk=34" >> gradle.properties
 
           # Gradle 8.8 — officially recommended for Expo SDK 53
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.8-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.10-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
 
           chmod +x gradlew
 
