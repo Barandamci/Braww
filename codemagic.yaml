@@ -52,6 +52,7 @@ workflows:
           # Kotlin 1.9.25 — matches expo SDK 53 toolchain
           sed -i '/kotlinVersion/d' gradle.properties
           echo "kotlinVersion=1.9.25" >> gradle.properties
+          echo "suppressKotlinVersionCompatibilityCheck=1.9.25" >> gradle.properties
 
           # Suppress AGP compile SDK warning
           echo "android.suppressUnsupportedCompileSdk=34" >> gradle.properties
