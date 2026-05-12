@@ -1,36 +1,12 @@
 import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
-import { SymbolView } from "expo-symbols";
-import { Feather } from "@expo/vector-icons";
-import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useColorScheme } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { SymbolView } from "expo-symbols";
 
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="chats">
-        <Icon sf={{ default: "message", selected: "message.fill" }} />
-        <Label>Sohbetler</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="groups">
-        <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
-        <Label>Gruplar</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="contacts">
-        <Icon sf={{ default: "magnifyingglass", selected: "magnifyingglass" }} />
-        <Label>Ara</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profil</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
-
-function ClassicTabLayout() {
+export default function TabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -48,38 +24,22 @@ function ClassicTabLayout() {
           backgroundColor: isIOS ? "transparent" : colors.background,
           borderTopWidth: isWeb ? 1 : StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
-          elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView intensity={100} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-          ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
           ) : null,
       }}
     >
       <Tabs.Screen
-        name="chats"
+        name="index"
         options={{
-          title: "Sohbetler",
+          title: "Sohbet",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="message" tintColor={color} size={22} />
+              <SymbolView name="bubble.left.and.bubble.right" tintColor={color} size={22} />
             ) : (
               <Feather name="message-circle" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="groups"
-        options={{
-          title: "Gruplar",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="person.3" tintColor={color} size={22} />
-            ) : (
-              <Feather name="users" size={22} color={color} />
             ),
         }}
       />
@@ -109,9 +69,4 @@ function ClassicTabLayout() {
       />
     </Tabs>
   );
-}
-
-export default function TabLayout() {
-  if (false) return <NativeTabLayout />;
-  return <ClassicTabLayout />;
 }
