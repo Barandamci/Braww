@@ -21,12 +21,23 @@ workflows:
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
 
-      - name: Fix Gradle properties
+      - name: Fix Gradle & Kotlin versions
         script: |
           cd artifacts/braw/android
-          echo "kotlinVersion=1.9.24" >> gradle.properties
+
+          # Kotlin 1.9.0 — expo-autolinking@2.1.x ile uyumlu
+          sed -i '/kotlinVersion/d' gradle.properties
+          echo "kotlinVersion=1.9.0" >> gradle.properties
+
+          # AGP uyarısını kapat
           echo "android.suppressUnsupportedCompileSdk=34" >> gradle.properties
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
+
+          # New arch sorun çıkarıyorsa kapat
+          sed -i 's/newArchEnabled=true/newArchEnabled=false/' gradle.properties
+
+          # Gradle 8.3 — expo-autolinking ile uyumlu, 8.6 değil
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.3-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
+
           chmod +x gradlew
 
       - name: Build Android APK
