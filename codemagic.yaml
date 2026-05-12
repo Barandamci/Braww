@@ -18,26 +18,14 @@ workflows:
 
       - name: Patch expo-modules-autolinking for Gradle 8.x
         script: |
-          # expo-modules-autolinking@2.1.15 uses org.gradle.internal.extensions.core.extra
-          # which is an internal Gradle API removed in Gradle 8.x.
-          # Fix: remove the internal import and replace usage with the public API.
           AUTOLINKING_SRC=$(find /Users/builder/clone/node_modules -path "*/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-settings-plugin/src/main/kotlin" -type d 2>/dev/null | head -1)
           if [ -n "$AUTOLINKING_SRC" ]; then
-            echo "Found autolinking source at: $AUTOLINKING_SRC"
             SM_FILE="$AUTOLINKING_SRC/expo/modules/plugin/SettingsManager.kt"
             if [ -f "$SM_FILE" ]; then
-              echo "Patching SettingsManager.kt..."
-              # Remove the internal Gradle API import
               sed -i '/import org.gradle.internal.extensions.core.extra/d' "$SM_FILE"
-              # Replace internal .extra.set() usage with the public ExtraPropertiesExtension API
               sed -i 's/project\.extra\.set(/project.extensions.extraProperties.set(/g' "$SM_FILE"
-              echo "Patch applied successfully"
-              grep -n "extra" "$SM_FILE" || true
-            else
-              echo "WARNING: SettingsManager.kt not found at $SM_FILE"
+              echo "Autolinking patch applied"
             fi
-          else
-            echo "WARNING: expo-modules-autolinking source not found"
           fi
 
       - name: Expo Prebuild
@@ -45,21 +33,22 @@ workflows:
           cd artifacts/braw
           npx expo prebuild --platform android --clean --no-install
 
+      - name: Patch expo-modules-core compose compiler
+        script: |
+          find /Users/builder/clone/node_modules/expo-modules-core -name "build.gradle" -o -name "build.gradle.kts" | while read f; do
+            sed -i 's/kotlin-compose-compiler-plugin-embeddable:1\.9\.24/kotlin-compose-compiler-plugin-embeddable:2.0.21/g' "$f"
+            sed -i 's/compose_compiler_version = "1\.9\.24"/compose_compiler_version = "2.0.21"/g' "$f"
+          done
+          echo "Compose compiler patch applied"
+
       - name: Fix Gradle & Kotlin versions
         script: |
           cd artifacts/braw/android
-
-          # Kotlin 1.9.25 — matches expo SDK 53 toolchain
           sed -i '/kotlinVersion/d' gradle.properties
           echo "kotlinVersion=2.0.21" >> gradle.properties
           echo "suppressKotlinVersionCompatibilityCheck=2.0.21" >> gradle.properties
-
-          # Suppress AGP compile SDK warning
           echo "android.suppressUnsupportedCompileSdk=34" >> gradle.properties
-
-          # Gradle 8.8 — officially recommended for Expo SDK 53
-          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.10-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
-
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.10-bin.zip\nnetworkTimeout=10000\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
 
       - name: Build Android APK
